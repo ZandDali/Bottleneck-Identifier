@@ -1,0 +1,116 @@
+
+"""
+Simple Workflow Bottleneck Identifier
+Author: Zandile Dalasile
+Purpose: Identify slowest step(s) in a process for improvement
+"""
+
+import csv
+from collections import defaultdict
+import matplotlib.pyplot as plt
+
+# ==============================
+# File configuration
+# ==============================
+DATA_FILE = "process_steps.csv"
+
+# ==============================
+# 1. Add process step data
+# ==============================
+def add_process_step():
+    """Prompt user to enter step name and completion time, then save to CSV."""
+    step_name = input("Enter step name: ").strip()
+    try:
+        completion_time = float(input("Enter completion time (minutes): "))
+    except ValueError:
+        print("Invalid input. Please enter a numeric value for time.")
+        return
+
+    with open(DATA_FILE, mode="a", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow([step_name, completion_time])
+
+    print(f"Step '{step_name}' with {completion_time} mins recorded.")
+
+# ==============================
+# 2. Load and analyze data
+# ==============================
+def load_data():
+    """Load process steps from CSV into a list."""
+    steps = []
+    try:
+        with open(DATA_FILE, mode="r") as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if len(row) == 2:  # avoid empty lines
+                    steps.append((row[0], float(row[1])))
+    except FileNotFoundError:
+        print("No data file found. Please add steps first.")
+    return steps
+
+def analyze_bottleneck(steps):
+    """Calculate average time per step and identify bottleneck."""
+    if not steps:
+        print("No data to analyze.")
+        return None, None
+
+    step_totals = defaultdict(float)
+    step_counts = defaultdict(int)
+
+    for step_name, time in steps:
+        step_totals[step_name] += time
+        step_counts[step_name] += 1
+
+    avg_times = {step: step_totals[step] / step_counts[step] for step in step_totals}
+    bottleneck_step = max(avg_times, key=avg_times.get)
+
+    return avg_times, bottleneck_step
+
+# ==============================
+# 3. Visualize results
+# ==============================
+def visualize(avg_times, bottleneck_step):
+    """Display a bar chart of average completion times per step."""
+    steps = list(avg_times.keys())
+    times = list(avg_times.values())
+    colors = ["red" if step == bottleneck_step else "skyblue" for step in steps]
+
+    plt.figure(figsize=(8, 5))
+    plt.bar(steps, times, color=colors)
+    plt.title("Average Completion Time per Process Step")
+    plt.xlabel("Process Step")
+    plt.ylabel("Time (minutes)")
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+    plt.show()
+
+# ==============================
+# 4. Menu-driven interface
+# ==============================
+def main():
+    while True:
+        print("\n=== Simple Workflow Bottleneck Identifier ===")
+        print("1. Add process step data")
+        print("2. Analyze bottleneck")
+        print("3. Exit")
+        choice = input("Select an option (1-3): ").strip()
+
+        if choice == "1":
+            add_process_step()
+        elif choice == "2":
+            steps = load_data()
+            avg_times, bottleneck = analyze_bottleneck(steps)
+            if avg_times:
+                print("\nAverage completion times:")
+                for step, avg in avg_times.items():
+                    print(f"{step}: {avg:.2f} mins")
+                print(f"\nBottleneck step: {bottleneck}")
+                visualize(avg_times, bottleneck)
+        elif choice == "3":
+            print("Exiting program.")
+            break
+        else:
+            print("Invalid choice. Please select 1-3.")
+
+if __name__ == "__main__":
+    main()
