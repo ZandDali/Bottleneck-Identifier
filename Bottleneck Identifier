@@ -1,6 +1,6 @@
 
 """
-Simple Workflow Bottleneck Identifier
+Process Bottleneck Identifier
 Author: Zandile Dalasile
 Purpose: Identify slowest step(s) in a process for improvement
 """
@@ -48,7 +48,7 @@ def load_data():
         print("No data file found. Please add steps first.")
     return steps
 
-def analyze_bottleneck(steps):
+def identify_bottleneck(steps):
     """Calculate average time per step and identify bottleneck."""
     if not steps:
         print("No data to analyze.")
